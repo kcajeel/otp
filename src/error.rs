@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::{self, write}};
+use std::{error::Error, fmt};
 
 #[derive(Debug)]
 pub enum ArgumentError {
