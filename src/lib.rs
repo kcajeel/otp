@@ -18,39 +18,47 @@ impl TryFrom<&[String]> for Mode {
             "-h" | "--help" => Ok(Mode::Help),
             "-v" | "--version" => Ok(Mode::Version),
             "-e" | "--encrypt" => {
-                if Self::args_are_valid(value, 3)? {
+                if Self::are_encryption_args_valid(value)? {
                     Ok(Mode::Encrypt {
                         plaintext: value[2].clone(),
                     })
                 } else {
                     Err(ArgumentError::InvalidArguments)
                 }
-            },
+            }
             "-d" | "--decrypt" => {
-                Err(ArgumentError::Unfinished)
-                // if Self::args_are_valid(value, 4)? {
-                //     if value[2].len() == value[3].len() {
-                //         Ok(Mode::Decrypt {
-                //             ciphertext: value[2].clone(),
-                //             key: value[3].clone(),
-                //         })
-                //     } else {
-                //         Err(ArgumentError::InvalidArgumentLengths)
-                //     }
-                // } else {
-                //     Err(ArgumentError::InvalidArguments)
-                // }
-            },
+                if Self::are_decryption_args_valid(value)? {
+                    Ok(Mode::Decrypt {
+                        ciphertext: blocks_to_string(&value[2]),
+                        key: blocks_to_string(&value[3]),
+                    })
+                } else {
+                    Err(ArgumentError::InvalidArguments)
+                }
+            }
             _ => Err(ArgumentError::InvalidArguments),
         }
     }
 }
 impl Mode {
-    fn args_are_valid(args: &[String], cmd_length: usize) -> Result<bool, ArgumentError> {
-        if args.len() > cmd_length - 1 {
+    fn are_encryption_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
+        if args.len() == 3 {
             for i in args {
                 if !i.is_ascii() {
                     return Err(ArgumentError::TextNotASCII);
+                }
+            }
+            Ok(true)
+        } else {
+            return Err(ArgumentError::InvalidArgumentNumber);
+        }
+    }
+
+    fn are_decryption_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
+        if args.len() == 4 {
+            for i in 2..args.len() {
+                if !args[i].chars().all(|x| x == '█' || x == ' ') {
+                    return Err(ArgumentError::UnsupportedDecryptionArguments);
                 }
             }
             Ok(true)
@@ -76,12 +84,14 @@ impl Program {
 }
 
 fn print_help() {
-    println!("Usage: otp [args] <plaintext | ciphertext key>
+    println!(
+        "Usage: otp [args] <plaintext | ciphertext key>
     \nwhere arguments include: 
         \n\t-h, --help\tDisplay this message
         \n\t-v, --version\tDisplay version information
         \n\tOptional <-e, --encrypt> [plaintext]\tEncrypt some ASCII plaintext
-        \n\t-d, --decrypt [ciphertext] [key]\tDecrypt some ASCII ciphertext with a key\n");
+        \n\t-d, --decrypt [ciphertext] [key]\tDecrypt some ASCII ciphertext with a key\n"
+    );
 }
 
 fn print_version() {
@@ -121,9 +131,15 @@ fn run_encryption(plaintext: &String) {
 fn run_decryption(ciphertext: &String, key: &String) {
     println!("Decrypting \"{}\" with key \"{}\"", ciphertext, key);
 
-    debug_assert_eq!(ciphertext.len(), key.len(), "cipher len: {}, key len: {}", ciphertext.len(), key.len());
+    debug_assert_eq!(
+        ciphertext.len(),
+        key.len(),
+        "cipher len: {}, key len: {}",
+        ciphertext.len(),
+        key.len()
+    );
 
-    let plaintext = encrypt(&blocks_to_string(ciphertext), &blocks_to_string(key));
+    let plaintext = encrypt(&ciphertext, &key);
     debug_assert_eq!(plaintext.len(), ciphertext.len());
 
     println!("Plaintext: \"{}\"", plaintext);
@@ -169,7 +185,7 @@ fn vec_to_string(vec: &Vec<u8>) -> String {
 fn string_to_blocks(string: &String) -> String {
     let bytes = string.as_bytes();
     let mut blocks = String::new();
-    
+
     for byte in bytes {
         for i in 0..8 {
             if byte & 1 << i != 0 {
@@ -197,14 +213,14 @@ fn blocks_to_string(blocks: &String) -> String {
             bytes.push(count);
         }
     }
-    
+
     let string = String::from_utf8_lossy(&bytes);
     string.into_owned()
 }
 
 fn blocks_to_bits(mut blocks: String) -> Vec<u8> {
     let mut bytes: Vec<u8> = vec![];
-    
+
     for _i in 0..blocks.len() {
         if let Some(block) = blocks.pop() {
             // println!("\"{}\"", block);
@@ -219,10 +235,9 @@ fn blocks_to_bits(mut blocks: String) -> Vec<u8> {
     bytes
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::{encrypt, generate_key};
+    use crate::{encrypt, generate_key, Mode};
 
     #[test]
     fn test_encryption() {
@@ -240,5 +255,71 @@ mod test {
         let key = generate_key(plaintext.len());
         let ciphertext = encrypt(&plaintext, &key);
         assert_eq!(encrypt(&ciphertext, &key), plaintext);
+    }
+
+    #[test]
+    fn test_encryption_valid_args() {
+        let args = [
+            "command".to_owned(),
+            "-e".to_owned(),
+            "testing args".to_owned(),
+        ];
+        assert!(Mode::are_encryption_args_valid(&args).unwrap());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_encryption_invalid_arg_number() {
+        let args = [
+            "command".to_owned(),
+            "-e".to_owned(),
+            "testing".to_owned(),
+            "args".to_owned(),
+        ];
+        let _test = Mode::are_decryption_args_valid(&args).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_encryption_non_ascii_args() {
+        let args = ["command".to_owned(), "-e".to_owned(), "你好".to_owned()];
+        let _test = Mode::are_decryption_args_valid(&args).unwrap();
+    }
+
+    #[test]
+    fn test_decryption_valid_args() {
+        let args = [
+            "command".to_owned(),
+            "-d".to_owned(),
+            "█           █    █ █ █   █  █   ".to_owned(),
+            "█ █ ███ █ █ ███ █  ██ █  ██  ██ ".to_owned(),
+        ];
+        assert!(Mode::are_decryption_args_valid(&args).unwrap());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_decryption_invalid_arg_number() {
+        let args = [
+            "command".to_owned(),
+            "-d".to_owned(),
+            "█           █    █ █ █   █  █   ".to_owned(),
+            "█ █ ███ █ █ ███ █  ██ █  ██  ██ ".to_owned(),
+            "█ ███   ██████    █ █".to_owned(),
+        ];
+        let _test = Mode::are_decryption_args_valid(&args).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_decryption_unsupported_args() {
+        let args = [
+            "command".to_owned(),
+            "-d".to_owned(),
+            "█           █ a  █ █ █   █  █   ".to_owned(),
+            "this is invalid".to_owned(),
+        ];
+
+        let _test = Mode::are_decryption_args_valid(&args).unwrap();
     }
 }
