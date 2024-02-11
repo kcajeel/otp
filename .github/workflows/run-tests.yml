@@ -1,0 +1,19 @@
+name: Run Tests
+on:
+  push:
+    branches:
+      - '*'
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        run: |
+          cargo test
