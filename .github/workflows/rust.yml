@@ -148,6 +148,8 @@ jobs:
           for DIR_NAME in * ; do
               cd $DIR_NAME
               chmod -R +x .
+              ls > contexts.txt
+              cat contents.txt | echo
               gh release upload $TAG $DIR_NAME
               cd ..
           done
