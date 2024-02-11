@@ -137,7 +137,7 @@ jobs:
 
       - name: Create Github Release
         run: |
-          TAG="$(date -u +"v%Y.%m.%d.%H%M").${GITHUB_SHA::4}"
+          TAG="$(date -u +"auto-build v%Y.%m.%d.%H%M").${GITHUB_SHA::4}"
           echo "Tag: ${TAG}"
 
           gh release create $TAG --draft --notes "Automatically built binaries"
@@ -150,13 +150,13 @@ jobs:
 
               if [[ $DIR_NAME == linux-* || $DIR_NAME == macos-* ]]; then
                 tar -czvf $DIR_NAME.tar.gz *
-                gh release upload $TAG $DIR_NAME.tar.gz
               fi
 
               if [[ $DIR_NAME == windows-* ]]; then
                 zip -r $DIR_NAME.zip *
-                gh release upload $TAG $DIR_NAME.zip
               fi
+              
+              gh release upload $TAG $DIR_NAME.*
 
               cd ..
           done
