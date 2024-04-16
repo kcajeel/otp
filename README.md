@@ -5,7 +5,7 @@ I am basing the design of this program on the `minigrep` example in the [Rust Bo
 
 `otp` works with ASCII characters and the first release is out! I'm planning to update it with support for UTF-8 characters when I figure out how to encrypt them with OTP. 
 
-Usage: 
+### Usage
 ```
 otp [args] <plaintext | ciphertext key>
 
@@ -15,6 +15,16 @@ otp [args] <plaintext | ciphertext key>
         -e, --encrypt   [plaintext]\tEncrypt some ASCII plaintext
         -d, --decrypt   [ciphertext] [key]\tDecrypt some ASCII ciphertext with a key
 ```
+
+### Example
+![1713278544335](image/README/1713278544335.png)
+![1713278507314](image/README/1713278507314.png)
+
+If you want to test it, decrypt the following ciphertext and key in your terminal: 
+`$ otp -d "█   ██  █ ████    █  █  ██ █ █     █    █    ██   █   █  ████ █ ██ █     █  █   ██  █ █ █ █ █ █ █████ █ "   █ ███   █ ███  ██ █ ██  █   █  ██ █  █ █    █  ██      ██ ██████  █   ██   ██████ "`
+
+It should output a "Hello, world!" message as the plaintext. 
+
 
 # Installation
 ## Binary Installation
