@@ -5,6 +5,17 @@ I am basing the design of this program on the `minigrep` example in the [Rust Bo
 
 `otp` works with ASCII characters and the first release is out! I'm planning to update it with support for UTF-8 characters when I figure out how to encrypt them with OTP. 
 
+Usage: 
+```
+otp [args] <plaintext | ciphertext key>
+
+    Where args include: 
+        -h, --help      Display this message
+        -v, --version   Display version information
+        -e, --encrypt   [plaintext]\tEncrypt some ASCII plaintext
+        -d, --decrypt   [ciphertext] [key]\tDecrypt some ASCII ciphertext with a key
+```
+
 # Installation
 ## Binary Installation
 If you don't know what this means, then it is probably the one you want.

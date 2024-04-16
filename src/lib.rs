@@ -111,17 +111,19 @@ pub fn run(program: Program) -> Result<(), Box<dyn Error>> {
 // these next four functions are self-explanatory.
 fn print_help() {
     println!(
-        "Usage: otp [args] <plaintext | ciphertext key>
-    \nwhere arguments include: 
-        \n\t-h, --help\tDisplay this message
-        \n\t-v, --version\tDisplay version information
-        \n\tOptional <-e, --encrypt> [plaintext]\tEncrypt some ASCII plaintext
-        \n\t-d, --decrypt [ciphertext] [key]\tDecrypt some ASCII ciphertext with a key\n"
+        "\nUsage: otp [args] <plaintext | ciphertext key>
+    \nWhere args include: 
+        \n    -h, --help\tDisplay this message
+        \n    -v, --version\tDisplay version information
+        \n    -e, --encrypt [plaintext]\tEncrypt some ASCII plaintext
+        \n    -d, --decrypt [ciphertext] [key]\tDecrypt some ASCII ciphertext with a key\n"
     );
 }
 
 fn print_version() {
-    println!("otp v{}", env!("CARGO_PKG_VERSION"));
+    println!("\notp v{}\n
+    Written by Jack Lee\n
+    Source: https://github.com/kcajeel/otp\n", env!("CARGO_PKG_VERSION"));
 }
 
 fn run_encryption(plaintext: &String) {
