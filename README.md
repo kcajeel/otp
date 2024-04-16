@@ -21,7 +21,9 @@ otp [args] <plaintext | ciphertext key>
 ![1713278507314](image/README/1713278507314.png)
 
 If you want to test it, decrypt the following ciphertext and key in your terminal: 
-`$ otp -d "█   ██  █ ████    █  █  ██ █ █     █    █    ██   █   █  ████ █ ██ █     █  █   ██  █ █ █ █ █ █ █████ █ "   █ ███   █ ███  ██ █ ██  █   █  ██ █  █ █    █  ██      ██ ██████  █   ██   ██████ "`
+```
+$ otp -d "█   ██  █ ████    █  █  ██ █ █     █    █    ██   █   █  ████ █ ██ █     █  █   ██  █ █ █ █ █ █ █████ █ "   █ ███   █ ███  ██ █ ██  █   █  ██ █  █ █    █  ██      ██ ██████  █   ██   ██████ "
+```
 
 It should output a "Hello, world!" message as the plaintext. 
 
