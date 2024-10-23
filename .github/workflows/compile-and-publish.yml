@@ -3,7 +3,7 @@ name: Compile and Publish
 on:
   push:
     branches:
-      - main
+      - release-*
 
 jobs:
   test:
