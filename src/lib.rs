@@ -288,4 +288,10 @@ mod test {
 
         let _test = Mode::are_decryption_args_valid(&args).unwrap();
     }
+
+    #[test]
+    // I want this test to fail to see what the GH Action does
+    fn test_github_action() {
+        assert_eq!(1, -1);
+    }
 }
