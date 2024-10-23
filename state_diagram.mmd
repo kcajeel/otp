@@ -6,17 +6,17 @@ q3: Generate Key
 q4: Encrypt Plaintext
 q5: Decrypt with Key
 q6: Display Usage
-    note right of q6: invalid state
+q7: Exit Program
 
 [*] --> q0: args passed
 q0 --> q1: -v or --version argument
-    q1 --> [*]
+    q1 --> q7
 q0 --> q2: -h or --help argument
-    q2 --> [*]
-q0 --> q3: plaintext or -e with plaintext given
+    q2 --> q7
+q0 --> q3: -e flag with plaintext
 q0 --> q6: invalid args
 q3 --> q4: key generated
 q4 --> q5: plaintext encrypted
-    q5 --> [*]
+    q5 --> q7
 q0 --> q5: -d flag given with ciphertext and key
-q6 --> [*]
+q6 --> q7
