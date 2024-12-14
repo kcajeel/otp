@@ -8,7 +8,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // print ciphertext and key
 }
 ```
-- I want to decrypt the ciphertext with the same key to test the encryption function. This could probably be done from a test module and I plan to make one soon. It doesn't really matter where it is right now but when I get everything working I won't want the tests included in the binary.
+- ~I want to decrypt the ciphertext with the same key to test the encryption function. This could probably be done from a test module and I plan to make one soon. It doesn't really matter where it is right now but when I get everything working I won't want the tests included in the binary.~
 
 - Rust does not support xor-ing Strings or characters. It does support xor-ing u8's. 
 - This is fine as long as the characters I want to encrypt are of fixed length (e.g. ASCII). In fact, the program works right not for ASCII characters.
@@ -16,9 +16,13 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 - I can convert a String into a byte sequence with the `.as_bytes()` method.
 - BUT, the resulting byte sequence may be longer in length than the String because it may contain multiple-byte UTF-8 characters.
 - OTP relies on the key and ciphertext to be length-preserving. I need a way to reduce a UTF-8 string into its bytes, XOR that with a random key, and then convert that back into a string of the same length that will be decryptable with the key.
+   
     - I could encrypt the string one character at a time.
     - This way, I can ensure that each ciphertext character has the same length as each plaintext character. 
 
     - I could "bruteforce" it by encrypting a character or string and repeating that until the ciphertext is the same length as the plaintext.
-    - this probably defeats the purpose of OTP because the key will not be random this way.
+      - this  defeats the purpose of OTP because the key will not be random this way.
+     
+    - I've heard about homomorphic encryption, where a ciphertext can have operations preserved on it and still be decrypted.
+      - I wonder if I can encode the UTF-8 strings in such a way that I can xor them with the key and still recover the string?
 
