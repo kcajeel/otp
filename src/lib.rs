@@ -203,6 +203,8 @@ fn vec_to_string(vec: &Vec<u8>) -> String {
 // Tests. These are explanatory by their names
 #[cfg(test)]
 mod test {
+    use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
+
     use crate::{encrypt, generate_key, Mode};
 
     #[test]
@@ -212,6 +214,37 @@ mod test {
         let ciphertext = encrypt(&plaintext, &key);
 
         let recovered_plaintext = encrypt(&ciphertext, &key);
+        assert_eq!(recovered_plaintext, plaintext);
+    }
+
+    
+    #[test]
+    fn test_b64_encryption_ascii() {
+        let plaintext = "testing in ascii".to_string();
+        let b64_plaintext = BASE64_STANDARD_NO_PAD.encode(&plaintext);
+        let key = generate_key(b64_plaintext.len());
+        let ciphertext = encrypt(&b64_plaintext, &key);
+        println!("Plaintext: {}\nB64 plaintext: {}\nKey: {}\nCiphertext: {}", plaintext, b64_plaintext, key, ciphertext);
+
+        let b64_recovered_plaintext = encrypt(&ciphertext, &key);
+        let recovered_plaintext = String::from_utf8(BASE64_STANDARD_NO_PAD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
+
+        println!("b64 recovered plaintext: {}\nrecovered plaintext: {}", b64_recovered_plaintext, recovered_plaintext);
+        assert_eq!(recovered_plaintext, plaintext);
+    }
+
+    #[test]
+    fn test_b64_encryption_utf8() {
+        let plaintext = "你好👋!".to_string();
+        let b64_plaintext = BASE64_STANDARD_NO_PAD.encode(&plaintext);
+        let key = generate_key(b64_plaintext.len());
+        let ciphertext = encrypt(&b64_plaintext, &key);
+        println!("Plaintext: {}\nB64 plaintext: {}\nKey: {}\nCiphertext: {}", plaintext, b64_plaintext, key, ciphertext);
+
+        let b64_recovered_plaintext = encrypt(&ciphertext, &key);
+        let recovered_plaintext = String::from_utf8(BASE64_STANDARD_NO_PAD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
+
+        println!("b64 recovered plaintext: {}\nrecovered plaintext: {}", b64_recovered_plaintext, recovered_plaintext);
         assert_eq!(recovered_plaintext, plaintext);
     }
 
