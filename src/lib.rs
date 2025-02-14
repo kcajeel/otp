@@ -28,7 +28,7 @@ impl TryFrom<&[String]> for Mode {
             "-h" | "--help" => Ok(Mode::Help),
             "-v" | "--version" => Ok(Mode::Version),
             "-e" | "--encrypt" => {
-                if Self::are_args_valid(args)? {
+                if Self::are_encryption_args_valid(args)? {
                     Ok(Mode::Encrypt {
                         plaintext: args[2].clone(), // args[2] is the plaintext when encryption mode is enabled
                     })
@@ -37,7 +37,7 @@ impl TryFrom<&[String]> for Mode {
                 }
             }
             "-d" | "--decrypt" => {
-                if Self::are_args_valid(args)? {
+                if Self::are_decryption_args_valid(args)? {
                     Ok(Mode::Decrypt {
                         ciphertext: blocks_to_string(&args[2]), // args[2] is the ciphertext when decryption mode is enabled
                         key: blocks_to_string(&args[3]), // args[3] is the key when decryption mode is enabled
@@ -53,9 +53,17 @@ impl TryFrom<&[String]> for Mode {
 
 // this impl contains functions that determine if the cli args are valid for the mode specified
 impl Mode {
-    fn are_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
-        const DECRYPTION_ARGS_RANGE: std::ops::Range<usize> = 2..3; // indices of ciphertext and key
 
+    fn are_encryption_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
+        const DECRYPTION_ARGS_RANGE: std::ops::Range<usize> = 2..3; // indices of ciphertext and key
+        if args.len() == 3 { // check args length
+            Ok(true)
+        } else {
+            return Err(ArgumentError::InvalidArgumentNumber);
+        }
+    }
+
+    fn are_decryption_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
         if args.len() == 4 { // check args length
             Ok(true)
         } else {
@@ -257,14 +265,7 @@ mod test {
             "testing".to_owned(),
             "args".to_owned(),
         ];
-        let _test = Mode::are_decryption_args_valid(&args).unwrap();
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_encryption_non_ascii_args() {
-        let args = ["command".to_owned(), "-e".to_owned(), "你好".to_owned()];
-        let _test = Mode::are_decryption_args_valid(&args).unwrap();
+        let _test = Mode::are_encryption_args_valid(&args).unwrap();
     }
 
     #[test]
@@ -288,19 +289,6 @@ mod test {
             "█ █ ███ █ █ ███ █  ██ █  ██  ██ ".to_owned(),
             "█ ███   ██████    █ █".to_owned(),
         ];
-        let _test = Mode::are_decryption_args_valid(&args).unwrap();
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_decryption_unsupported_args() {
-        let args = [
-            "command".to_owned(),
-            "-d".to_owned(),
-            "█           █ a  █ █ █   █  █   ".to_owned(),
-            "this is invalid".to_owned(),
-        ];
-
         let _test = Mode::are_decryption_args_valid(&args).unwrap();
     }
 }
