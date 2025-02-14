@@ -3,6 +3,7 @@
     I've added comments throughout to help explain what stuff is.
 */
 
+use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
 //imports
 use blocks::{blocks_to_string, string_to_blocks};
 use error::ArgumentError;
@@ -117,18 +118,19 @@ fn print_version() {
 }
 
 fn run_encryption(plaintext: &String) {
-    let key = generate_key(plaintext.len());
+    let base64_plaintext = BASE64_STANDARD_NO_PAD.encode(plaintext);
+
+    let key = generate_key(base64_plaintext.len());
 
     println!(
         "Encrypting \"{}\" with key: \n\"{}\"",
         plaintext,
-        string_to_blocks(&key)
+        key
     );
-    debug_assert_eq!(key.len(), plaintext.len());
 
-    let ciphertext = encrypt(plaintext, &key);
-    debug_assert_eq!(ciphertext.len(), plaintext.len());
-    println!("Ciphertext: \n\"{}\"", string_to_blocks(&ciphertext));
+    let ciphertext = encrypt(&base64_plaintext, &key);
+    debug_assert_eq!(ciphertext.len(), base64_plaintext.len());
+    println!("Ciphertext: \n\"{}\"", ciphertext);
 }
 
 fn run_decryption(ciphertext: &String, key: &String) {
