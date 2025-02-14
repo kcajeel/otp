@@ -5,13 +5,11 @@
 
 use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
 //imports
-use blocks::{blocks_to_string, string_to_blocks};
 use error::ArgumentError;
 use rand::Rng;
 use std::{error::Error, ops::RangeInclusive};
 
 mod error;
-mod blocks;
 
 // Mode depends on the args passed and will change the output of the program accordingly
 pub enum Mode {
@@ -40,8 +38,8 @@ impl TryFrom<&[String]> for Mode {
             "-d" | "--decrypt" => {
                 if Self::are_decryption_args_valid(args)? {
                     Ok(Mode::Decrypt {
-                        ciphertext: blocks_to_string(&args[2]), // args[2] is the ciphertext when decryption mode is enabled
-                        key: blocks_to_string(&args[3]), // args[3] is the key when decryption mode is enabled
+                        ciphertext: args[2].clone(), // args[2] is the ciphertext when decryption mode is enabled
+                        key: args[3].clone(), // args[3] is the key when decryption mode is enabled
                     })
                 } else {
                     Err(ArgumentError::InvalidArguments)
