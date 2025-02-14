@@ -28,7 +28,7 @@ impl TryFrom<&[String]> for Mode {
             "-h" | "--help" => Ok(Mode::Help),
             "-v" | "--version" => Ok(Mode::Version),
             "-e" | "--encrypt" => {
-                if Self::are_encryption_args_valid(args)? {
+                if Self::are_args_valid(args)? {
                     Ok(Mode::Encrypt {
                         plaintext: args[2].clone(), // args[2] is the plaintext when encryption mode is enabled
                     })
@@ -37,7 +37,7 @@ impl TryFrom<&[String]> for Mode {
                 }
             }
             "-d" | "--decrypt" => {
-                if Self::are_decryption_args_valid(args)? {
+                if Self::are_args_valid(args)? {
                     Ok(Mode::Decrypt {
                         ciphertext: blocks_to_string(&args[2]), // args[2] is the ciphertext when decryption mode is enabled
                         key: blocks_to_string(&args[3]), // args[3] is the key when decryption mode is enabled
@@ -53,28 +53,10 @@ impl TryFrom<&[String]> for Mode {
 
 // this impl contains functions that determine if the cli args are valid for the mode specified
 impl Mode {
-    fn are_encryption_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
-        if args.len() == 3 { // check args length
-            for i in args {
-                if !i.is_ascii() { // make sure plaintext is ascii
-                    return Err(ArgumentError::TextNotASCII);
-                }
-            }
-            Ok(true)
-        } else {
-            return Err(ArgumentError::InvalidArgumentNumber);
-        }
-    }
-
-    fn are_decryption_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
+    fn are_args_valid(args: &[String]) -> Result<bool, ArgumentError> {
         const DECRYPTION_ARGS_RANGE: std::ops::Range<usize> = 2..3; // indices of ciphertext and key
 
         if args.len() == 4 { // check args length
-            for i in DECRYPTION_ARGS_RANGE { // iterate through ciphertext and key 
-                if !args[i].chars().all(|x| x == '█' || x == ' ') { // if any characters aren't '█' or ' ', throw error
-                    return Err(ArgumentError::UnsupportedDecryptionArguments);
-                }
-            }
             Ok(true)
         } else {
             return Err(ArgumentError::InvalidArgumentNumber);
