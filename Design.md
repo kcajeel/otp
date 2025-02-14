@@ -31,3 +31,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 I'm coming back to this project after almost a year of working, schooling, and etc. 
 I don't know why I hadn't considered base64-encoding the plaintext and then encrypting it, but that should solve my unicode issue. 
 I'll test it out and then add that functionality if it works in the tests (it should).
+
+- It worked! 
+- I'm going to update this project to work without the block character i/o because it was never ideal to begin with
+- I'm really glad that I figured this out, I'm excited to start implementing the b64-encoding in the program and testing it
+  - Once all the tests succeed, I'll make a pr to add the updated code to main and then I'll make a new release. 
