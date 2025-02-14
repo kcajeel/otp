@@ -26,3 +26,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     - I've heard about homomorphic encryption, where a ciphertext can have operations preserved on it and still be decrypted.
       - I wonder if I can encode the UTF-8 strings in such a way that I can xor them with the key and still recover the string?
 
+## Update
+
+I'm coming back to this project after almost a year of working, schooling, and etc. 
+I don't know why I hadn't considered base64-encoding the plaintext and then encrypting it, but that should solve my unicode issue. 
+I'll test it out and then add that functionality if it works in the tests (it should).
