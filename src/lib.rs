@@ -8,6 +8,7 @@ use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
 use error::ArgumentError;
 use mode::Mode;
 use rand::Rng;
+use unicode_width::UnicodeWidthStr;
 use std::{error::Error, ops::RangeInclusive};
 
 mod error;
@@ -76,12 +77,13 @@ fn run_encryption(plaintext: &String) {
 fn run_decryption(ciphertext: &String, key: &String) {
     println!("Decrypting \"{}\" with key \"{}\"", ciphertext, key);
 
+    // using unicode width because some utf-8 chars are multiple bytes
     debug_assert_eq!(
-        ciphertext.len(),
-        key.len(),
+        ciphertext.width(),
+        key.width(), 
         "cipher len: {}, key len: {}",
-        ciphertext.len(),
-        key.len()
+        ciphertext.width(),
+        key.width()
     );
 
     let plaintext = encrypt(&ciphertext, &key);
@@ -100,7 +102,7 @@ fn generate_key(length: usize) -> String {
         .collect(); // add random numbers in ASCII_RANGE to the key Vec
     debug_assert_eq!(key.len(), length);
 
-    vec_to_string(&key)
+    String::from_utf8(key).expect("error parsing utf-8 (in genkey)")
 }
 
 fn encrypt(plaintext: &String, key: &String) -> String {
@@ -119,17 +121,7 @@ fn encrypt(plaintext: &String, key: &String) -> String {
         .collect();
 
     debug_assert_eq!(ciphertext.len(), plaintext_bytes.len());
-    vec_to_string(&ciphertext)
-}
-
-// convert a vec to a string. I think String::from_utf8() would work too and I might get rid of this
-fn vec_to_string(vec: &Vec<u8>) -> String {
-    let mut string = String::new();
-    for i in 0..vec.len() {
-        string.push(vec[i] as char);
-    }
-    debug_assert_eq!(string.len(), vec.len());
-    string
+    String::from_utf8(ciphertext).expect("error parsing utf-8 (encrypt)")
 }
 
 // Tests. These are explanatory by their names
@@ -160,6 +152,8 @@ use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
         println!("Plaintext: {}\nB64 plaintext: {}\nKey: {}\nCiphertext: {}", plaintext, b64_plaintext, key, ciphertext);
 
         let b64_recovered_plaintext = encrypt(&ciphertext, &key);
+        assert_eq!(b64_recovered_plaintext.len(), ciphertext.len());
+
         let recovered_plaintext = String::from_utf8(BASE64_STANDARD_NO_PAD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
 
         println!("b64 recovered plaintext: {}\nrecovered plaintext: {}", b64_recovered_plaintext, recovered_plaintext);
@@ -175,6 +169,9 @@ use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
         println!("Plaintext: {}\nB64 plaintext: {}\nKey: {}\nCiphertext: {}", plaintext, b64_plaintext, key, ciphertext);
 
         let b64_recovered_plaintext = encrypt(&ciphertext, &key);
+        assert_eq!(b64_recovered_plaintext.len(), ciphertext.len());
+// !mFKTG
+// ↓'m↓=0
         let recovered_plaintext = String::from_utf8(BASE64_STANDARD_NO_PAD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
 
         println!("b64 recovered plaintext: {}\nrecovered plaintext: {}", b64_recovered_plaintext, recovered_plaintext);
