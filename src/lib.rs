@@ -37,7 +37,7 @@ pub fn run(program: Program) -> Result<(), Box<dyn Error>> {
         Mode::Help => Ok(print_help()),
         Mode::Version => Ok(print_version()),
         Mode::Encrypt { plaintext } => Ok(run_encryption(&plaintext)),
-        Mode::Decrypt { ciphertext, key } => Ok(run_decryption(&ciphertext, &key)),
+        Mode::Decrypt { ciphertext, key } => Ok(run_decryption(&ciphertext, &key)?),
     }
 }
 
@@ -80,11 +80,11 @@ fn run_encryption(plaintext: &String) {
     println!("To decrypt: \notp -d \"{}\" \"{}\"", ciphertext, key);
 }
 
-fn run_decryption(b64_ciphertext: &String, b64_key: &String) {
+fn run_decryption(b64_ciphertext: &String, b64_key: &String) -> Result<(), Box<dyn std::error::Error>> {
     println!("Decrypting \"{}\" with key \"{}\"", b64_ciphertext, b64_key);
 
-    let ciphertext = handle_b64_decoding(b64_ciphertext);
-    let key = handle_b64_decoding(b64_key);
+    let ciphertext = handle_b64_decoding(b64_ciphertext)?;
+    let key = handle_b64_decoding(b64_key)?;
     // using unicode width because some utf-8 chars are multiple bytes
     debug_assert_eq!(
         ciphertext.len(),
@@ -99,8 +99,10 @@ fn run_decryption(b64_ciphertext: &String, b64_key: &String) {
     let b64_plaintext = encrypt(&ciphertext, &key);
     debug_assert_eq!(b64_plaintext.len(), ciphertext.len());
 
-    let plaintext = handle_b64_decoding(&b64_plaintext);
+    let plaintext = handle_b64_decoding(&b64_plaintext)?;
     println!("Plaintext: \"{}\"", plaintext);
+
+    Ok(())
 }
 
 // generate a pseudorandom key of a specified length
@@ -135,22 +137,22 @@ fn encrypt(plaintext: &String, key: &String) -> String {
     String::from_utf8(ciphertext).expect("error parsing utf-8 (encrypt)")
 }
 
-fn handle_b64_decoding(b64_string: &String) -> String {
+fn handle_b64_decoding(b64_string: &String) -> Result<String, Box<dyn Error>> {
     match BASE64_STANDARD_NO_PAD.decode(&b64_string) {
         Ok(decoded_vec) => match String::from_utf8(decoded_vec) {
-            Ok(decoded_string) => decoded_string,
+            Ok(decoded_string) => Ok(decoded_string),
             Err(e) => {
                 eprintln!(
                     "Error encoding \"{}\" into a UTF-8 String: {}",
                     b64_string, e
                 );
-                panic!("UTF-8 conversion failed.");
+                Err("UTF-8 conversion failed.".into())
             }
         },
 
         Err(e) => {
             eprintln!("Error decoding \"{}\" from base64: {}", b64_string, e);
-            panic!("Base64 decoding failed. ");
+            Err("Base64 decoding failed. ".into())
         }
     }
 }
@@ -171,10 +173,11 @@ mod test {
 
     #[test]
     fn test_run_decryption() {
-        run_decryption(
+        let result = run_decryption(
             &String::from("MiADCCQxFl9XEiRWWjAeTzpMQ0w"),
             &String::from("a05JYEV+RWY4XXM6LGNaOFR5Kjg"),
-        );
+        ).unwrap();
+        assert_eq!(result, ())
     }
 
     // This test has helped me debug the decryption step
