@@ -3,12 +3,11 @@
     I've added comments throughout to help explain what stuff is.
 */
 
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
 //imports
 use error::ArgumentError;
 use mode::Mode;
 use rand::Rng;
-use unicode_width::UnicodeWidthStr;
 use std::{error::Error, ops::RangeInclusive};
 
 mod error;
@@ -59,7 +58,7 @@ fn print_version() {
 }
 
 fn run_encryption(plaintext: &String) {
-    let base64_plaintext = BASE64_STANDARD.encode(plaintext);
+    let base64_plaintext = BASE64_STANDARD_NO_PAD.encode(plaintext);
 
     let key = generate_key(base64_plaintext.len());
 
@@ -71,25 +70,30 @@ fn run_encryption(plaintext: &String) {
 
     let mut ciphertext = encrypt(&base64_plaintext, &key);
     debug_assert_eq!(ciphertext.len(), base64_plaintext.len());
-    ciphertext = BASE64_STANDARD.encode(ciphertext);
+    ciphertext = BASE64_STANDARD_NO_PAD.encode(ciphertext);
     println!("Ciphertext: \n\"{}\"", ciphertext);
 }
 
-fn run_decryption(ciphertext: &String, key: &String) {
-    println!("Decrypting \"{}\" with key \"{}\"", ciphertext, key);
+fn run_decryption(b64_ciphertext: &String, key: &String) {
+    println!("Decrypting \"{}\" with key \"{}\"", b64_ciphertext, key);
+
+    let ciphertext = handle_b64_decoding(b64_ciphertext);
 
     // using unicode width because some utf-8 chars are multiple bytes
     debug_assert_eq!(
-        ciphertext.width(),
-        key.width(), 
-        "cipher len: {}, key len: {}",
-        ciphertext.width(),
-        key.width()
+        ciphertext.len(),
+        key.len(), 
+        "cipher len: {}, key len: {}\nciphertext: {}\nkey: {}",
+        ciphertext.len(),
+        key.len(),
+        ciphertext,
+        key
     );
 
-    let plaintext = encrypt(&ciphertext, &key);
-    debug_assert_eq!(plaintext.len(), ciphertext.len());
+    let b64_plaintext = encrypt(&ciphertext, &key);
+    debug_assert_eq!(b64_plaintext.len(), ciphertext.len());
 
+    let plaintext = handle_b64_decoding(&b64_plaintext);
     println!("Plaintext: \"{}\"", plaintext);
 }
 
@@ -125,6 +129,25 @@ fn encrypt(plaintext: &String, key: &String) -> String {
     String::from_utf8(ciphertext).expect("error parsing utf-8 (encrypt)")
 }
 
+fn handle_b64_decoding(b64_string: &String) -> String {
+    match BASE64_STANDARD_NO_PAD.decode(&b64_string) {
+        Ok(decoded_vec) => {
+            match String::from_utf8(decoded_vec) {
+                Ok(decoded_string) => decoded_string,
+                Err(e) => {
+                    eprintln!("Error encoding \"{}\" into a UTF-8 String: {}", b64_string, e);
+                    panic!()
+                },
+            }
+        },
+        
+        Err(e) => {
+            eprintln!("Error decoding \"{}\" from base64: {}", b64_string, e);
+            panic!()
+        }
+    }
+}
+
 // Tests. These are explanatory by their names
 #[cfg(test)]
 mod test {
@@ -139,11 +162,16 @@ use base64::prelude::{BASE64_STANDARD, Engine};
         run_encryption(&"👋testing👋".to_string());
     }
 
+    #[test]
+    fn test_run_decryption() {
+        run_decryption(&String::from("TSBhGjIAPE9SZXYGGSIRT04HIT4"), &String::from("ujJH[3n#1V$v{Ow8 2fr"));
+    }
+
     // This test has helped me debug the decryption step
     // It seems to work with b64-encoded ciphertext instead of utf-8 ciphertext
     // I'll implement this change in the run_encryption function
     #[test]
-    fn test_run_decryption() {
+    fn test_decryption_with_b64_ciphertext() {
         let ciphertext = String::from_utf8(BASE64_STANDARD.decode("XRYaASsSay08QTozHgsSMBpWOQA=").unwrap()).unwrap();
         let b64_plaintext = encrypt(&ciphertext, &String::from(r"e\1SB!9A_rhC|ftGtc~L"));
         println!("b64_plaintext: \"{}\"", b64_plaintext);
