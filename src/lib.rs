@@ -1,5 +1,5 @@
 /*
-    This file contains the core functionality of the program. 
+    This file contains the core functionality of the program.
     I've added comments throughout to help explain what stuff is.
 */
 
@@ -19,7 +19,8 @@ pub struct Program {
 }
 impl Program {
     pub fn build(args: &[String]) -> Result<Self, ArgumentError> {
-        if args.len() < 2 { // check args length >= 2
+        if args.len() < 2 {
+            // check args length >= 2
             return Err(ArgumentError::InvalidArgumentNumber);
         }
 
@@ -31,7 +32,8 @@ impl Program {
 
 // this function runs the program :D
 pub fn run(program: Program) -> Result<(), Box<dyn Error>> {
-    match program.mode { // match each mode with the execution function
+    match program.mode {
+        // match each mode with the execution function
         Mode::Help => Ok(print_help()),
         Mode::Version => Ok(print_version()),
         Mode::Encrypt { plaintext } => Ok(run_encryption(&plaintext)),
@@ -42,47 +44,51 @@ pub fn run(program: Program) -> Result<(), Box<dyn Error>> {
 // these next four functions are self-explanatory.
 fn print_help() {
     println!(
-        "\nUsage: otp [args] <plaintext | ciphertext key>
-    \nWhere args include: 
+        "Usage: otp [args] <plaintext | ciphertext key>
+    Where args include: 
     -h, --help\t\t\t\tDisplay this message
     -v, --version\t\t\tDisplay version information
     -e, --encrypt [plaintext]\t\tEncrypt plaintext
-    -d, --decrypt [ciphertext] [key]\tDecrypt ciphertext with a key\n"
+    -d, --decrypt [ciphertext] [key]\tDecrypt ciphertext with a key"
     );
 }
 
 fn print_version() {
-    println!("\notp v{}
+    println!(
+        "otp v{}
     Written by Jack Lee
-    Source: https://github.com/kcajeel/otp\n", env!("CARGO_PKG_VERSION"));
+    Source: https://github.com/kcajeel/otp",
+        env!("CARGO_PKG_VERSION")
+    );
 }
 
 fn run_encryption(plaintext: &String) {
     let base64_plaintext = BASE64_STANDARD_NO_PAD.encode(plaintext);
 
-    let key = generate_key(base64_plaintext.len());
+    let mut key = generate_key(base64_plaintext.len());
 
-    println!(
-        "Encrypting \"{}\" with key: \n\"{}\"",
-        plaintext,
-        key
-    );
+    println!("Encrypting \"{}\" ...", plaintext);
 
     let mut ciphertext = encrypt(&base64_plaintext, &key);
     debug_assert_eq!(ciphertext.len(), base64_plaintext.len());
+
     ciphertext = BASE64_STANDARD_NO_PAD.encode(ciphertext);
+    key = BASE64_STANDARD_NO_PAD.encode(key);
+    
     println!("Ciphertext: \n\"{}\"", ciphertext);
+    println!("Key: \"{}\"", key);
+    println!("To decrypt: \notp -d \"{}\" \"{}\"", ciphertext, key);
 }
 
-fn run_decryption(b64_ciphertext: &String, key: &String) {
-    println!("Decrypting \"{}\" with key \"{}\"", b64_ciphertext, key);
+fn run_decryption(b64_ciphertext: &String, b64_key: &String) {
+    println!("Decrypting \"{}\" with key \"{}\"", b64_ciphertext, b64_key);
 
     let ciphertext = handle_b64_decoding(b64_ciphertext);
-
+    let key = handle_b64_decoding(b64_key);
     // using unicode width because some utf-8 chars are multiple bytes
     debug_assert_eq!(
         ciphertext.len(),
-        key.len(), 
+        key.len(),
         "cipher len: {}, key len: {}\nciphertext: {}\nkey: {}",
         ciphertext.len(),
         key.len(),
@@ -131,19 +137,20 @@ fn encrypt(plaintext: &String, key: &String) -> String {
 
 fn handle_b64_decoding(b64_string: &String) -> String {
     match BASE64_STANDARD_NO_PAD.decode(&b64_string) {
-        Ok(decoded_vec) => {
-            match String::from_utf8(decoded_vec) {
-                Ok(decoded_string) => decoded_string,
-                Err(e) => {
-                    eprintln!("Error encoding \"{}\" into a UTF-8 String: {}", b64_string, e);
-                    panic!()
-                },
+        Ok(decoded_vec) => match String::from_utf8(decoded_vec) {
+            Ok(decoded_string) => decoded_string,
+            Err(e) => {
+                eprintln!(
+                    "Error encoding \"{}\" into a UTF-8 String: {}",
+                    b64_string, e
+                );
+                panic!("UTF-8 conversion failed.");
             }
         },
-        
+
         Err(e) => {
             eprintln!("Error decoding \"{}\" from base64: {}", b64_string, e);
-            panic!()
+            panic!("Base64 decoding failed. ");
         }
     }
 }
@@ -152,7 +159,7 @@ fn handle_b64_decoding(b64_string: &String) -> String {
 #[cfg(test)]
 mod test {
     use crate::{run_decryption, run_encryption, Mode};
-use base64::prelude::{BASE64_STANDARD, Engine};
+    use base64::prelude::{Engine, BASE64_STANDARD};
 
     use crate::{encrypt, generate_key};
 
@@ -164,7 +171,10 @@ use base64::prelude::{BASE64_STANDARD, Engine};
 
     #[test]
     fn test_run_decryption() {
-        run_decryption(&String::from("TSBhGjIAPE9SZXYGGSIRT04HIT4"), &String::from("ujJH[3n#1V$v{Ow8 2fr"));
+        run_decryption(
+            &String::from("MiADCCQxFl9XEiRWWjAeTzpMQ0w"),
+            &String::from("a05JYEV+RWY4XXM6LGNaOFR5Kjg"),
+        );
     }
 
     // This test has helped me debug the decryption step
@@ -172,10 +182,18 @@ use base64::prelude::{BASE64_STANDARD, Engine};
     // I'll implement this change in the run_encryption function
     #[test]
     fn test_decryption_with_b64_ciphertext() {
-        let ciphertext = String::from_utf8(BASE64_STANDARD.decode("XRYaASsSay08QTozHgsSMBpWOQA=").unwrap()).unwrap();
+        let ciphertext = String::from_utf8(
+            BASE64_STANDARD
+                .decode("XRYaASsSay08QTozHgsSMBpWOQA=")
+                .unwrap(),
+        )
+        .unwrap();
         let b64_plaintext = encrypt(&ciphertext, &String::from(r"e\1SB!9A_rhC|ftGtc~L"));
         println!("b64_plaintext: \"{}\"", b64_plaintext);
-        println!("decoded plaintext: \n\"{}\"", String::from_utf8(BASE64_STANDARD.decode(b64_plaintext).unwrap()).unwrap());
+        println!(
+            "decoded plaintext: \n\"{}\"",
+            String::from_utf8(BASE64_STANDARD.decode(b64_plaintext).unwrap()).unwrap()
+        );
     }
 
     #[test]
@@ -188,21 +206,27 @@ use base64::prelude::{BASE64_STANDARD, Engine};
         assert_eq!(recovered_plaintext, plaintext);
     }
 
-    
     #[test]
     fn test_b64_encryption_ascii() {
         let plaintext = "testing in ascii".to_string();
         let b64_plaintext = BASE64_STANDARD.encode(&plaintext);
         let key = generate_key(b64_plaintext.len());
         let ciphertext = encrypt(&b64_plaintext, &key);
-        println!("Plaintext: {}\nB64 plaintext: {}\nKey: {}\nCiphertext: {}", plaintext, b64_plaintext, key, ciphertext);
+        println!(
+            "Plaintext: {}\nB64 plaintext: {}\nKey: {}\nCiphertext: {}",
+            plaintext, b64_plaintext, key, ciphertext
+        );
 
         let b64_recovered_plaintext = encrypt(&ciphertext, &key);
         assert_eq!(b64_recovered_plaintext.len(), ciphertext.len());
 
-        let recovered_plaintext = String::from_utf8(BASE64_STANDARD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
+        let recovered_plaintext =
+            String::from_utf8(BASE64_STANDARD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
 
-        println!("b64 recovered plaintext: {}\nrecovered plaintext: {}", b64_recovered_plaintext, recovered_plaintext);
+        println!(
+            "b64 recovered plaintext: {}\nrecovered plaintext: {}",
+            b64_recovered_plaintext, recovered_plaintext
+        );
         assert_eq!(recovered_plaintext, plaintext);
     }
 
@@ -212,14 +236,21 @@ use base64::prelude::{BASE64_STANDARD, Engine};
         let b64_plaintext = BASE64_STANDARD.encode(&plaintext);
         let key = generate_key(b64_plaintext.len());
         let ciphertext = encrypt(&b64_plaintext, &key);
-        println!("Plaintext: \"{}\"\nB64 plaintext: \"{}\"\nKey: \"{}\"\nCiphertext: \"{}\"", plaintext, b64_plaintext, key, ciphertext);
+        println!(
+            "Plaintext: \"{}\"\nB64 plaintext: \"{}\"\nKey: \"{}\"\nCiphertext: \"{}\"",
+            plaintext, b64_plaintext, key, ciphertext
+        );
 
         let b64_recovered_plaintext = encrypt(&ciphertext, &key);
         assert_eq!(b64_recovered_plaintext.len(), ciphertext.len());
 
-        let recovered_plaintext = String::from_utf8(BASE64_STANDARD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
+        let recovered_plaintext =
+            String::from_utf8(BASE64_STANDARD.decode(&b64_recovered_plaintext).unwrap()).unwrap();
 
-        println!("b64 recovered plaintext: \"{}\"\nrecovered plaintext: \"{}\"", b64_recovered_plaintext, recovered_plaintext);
+        println!(
+            "b64 recovered plaintext: \"{}\"\nrecovered plaintext: \"{}\"",
+            b64_recovered_plaintext, recovered_plaintext
+        );
         assert_eq!(recovered_plaintext, plaintext);
     }
 
