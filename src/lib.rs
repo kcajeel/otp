@@ -44,16 +44,16 @@ fn print_help() {
     println!(
         "\nUsage: otp [args] <plaintext | ciphertext key>
     \nWhere args include: 
-        \n    -h, --help\tDisplay this message
-        \n    -v, --version\tDisplay version information
-        \n    -e, --encrypt [plaintext]\tEncrypt some ASCII plaintext
-        \n    -d, --decrypt [ciphertext] [key]\tDecrypt some ASCII ciphertext with a key\n"
+    -h, --help\t\t\t\tDisplay this message
+    -v, --version\t\t\tDisplay version information
+    -e, --encrypt [plaintext]\t\tEncrypt plaintext
+    -d, --decrypt [ciphertext] [key]\tDecrypt ciphertext with a key\n"
     );
 }
 
 fn print_version() {
-    println!("\notp v{}\n
-    Written by Jack Lee\n
+    println!("\notp v{}
+    Written by Jack Lee
     Source: https://github.com/kcajeel/otp\n", env!("CARGO_PKG_VERSION"));
 }
 
