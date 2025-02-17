@@ -111,7 +111,7 @@ fn generate_key(length: usize) -> String {
 
     println!("Generating key with length {}", length);
     let key: Vec<u8> = (0..length)
-        .map(|_| rand::thread_rng().gen_range(ASCII_RANGE))
+        .map(|_| rand::rng().random_range(ASCII_RANGE))
         .collect(); // add random numbers in ASCII_RANGE to the key Vec
     debug_assert_eq!(key.len(), length);
 
