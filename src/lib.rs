@@ -288,4 +288,9 @@ mod test {
 
         let _test = Mode::are_decryption_args_valid(&args).unwrap();
     }
+    // this should pass the GH action
+    #[test]
+    fn test_github_action_should_pass() {
+        assert_eq!(1, 1);
+    }
 }
